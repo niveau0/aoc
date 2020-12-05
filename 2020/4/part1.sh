@@ -18,7 +18,7 @@ while read LINE; do
         done
     done
 
-    if [ $FOUNDREQ == ${#REQ[@]@} ]
+    if [ $FOUNDREQ == ${#REQ[@]} ]
     then
         echo VALID ${PW[@]}
         VALID=$(($VALID+1))
