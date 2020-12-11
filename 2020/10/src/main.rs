@@ -35,47 +35,28 @@ fn part1(lines: &mut Vec<i64>) {
 }
 
 fn part2(lines: &mut Vec<i64>) {
+    println!("## Part 2");
+
     lines.sort();
     lines.push(lines.last().unwrap() + 3);
     let slice = lines.as_slice();
 
-    println!("## Part 2");
-    println!(
-        "{}",
-        (1..4)
-            .map(|distance| {
-                let mut sum = 0;
-                for idx in 0..slice.len() {
-                    if distance < slice[idx] {
-                        break;
-                    }
-                    sum = sum + find_streak(0, distance, &slice[idx..])
-                }
-                sum
-            })
-            .sum::<i64>()
-    );
+    println!("{}", find_next(0, slice));
 }
 
-fn find_streak(value: i64, distance: i64, slice: &[i64]) -> i64 {
-    let next = slice[0];
-    if value + distance != next {
-        return 0;
-    }
-    if slice.len() == 1 {
-        return 1;
-    }
-
-    (1..4)
-        .map(|distance| {
-            let mut sum = 0;
-            for idx in 1..slice.len() {
-                if next + distance < slice[idx] {
-                    break;
-                }
-                sum = sum + find_streak(next, distance, &slice[idx..])
-            }
-            sum
+fn find_next(v: i64, slice: &[i64]) -> i64 {
+    (1..=3)
+        .map(|d| {
+            (0..d)
+                .filter(|idx| idx < &slice.len())
+                .filter(|idx| slice[*idx] == v + d as i64)
+                .map(move |idx| {
+                    if idx >= slice.len() - 1 {
+                        return 1;
+                    }
+                    find_next(slice[idx], &slice[idx + 1..])
+                })
+                .sum::<i64>()
         })
         .sum::<i64>()
 }
