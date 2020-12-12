@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path};
+use std::{collections::HashMap, env, fs, path::Path};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -37,26 +37,28 @@ fn part1(lines: &mut Vec<i64>) {
 fn part2(lines: &mut Vec<i64>) {
     println!("## Part 2");
 
+    lines.push(0);
     lines.sort();
     lines.push(lines.last().unwrap() + 3);
+
     let slice = lines.as_slice();
 
-    println!("{}", find_next(0, slice));
+    let mut visited = HashMap::new();
+    println!("{}", find_combis(0, slice, &mut visited));
 }
 
-fn find_next(v: i64, slice: &[i64]) -> i64 {
-    (1..=3)
-        .map(|d| {
-            (0..d)
-                .filter(|idx| idx < &slice.len())
-                .filter(|idx| slice[*idx] == v + d as i64)
-                .map(move |idx| {
-                    if idx >= slice.len() - 1 {
-                        return 1;
-                    }
-                    find_next(slice[idx], &slice[idx + 1..])
-                })
-                .sum::<i64>()
-        })
-        .sum::<i64>()
+fn find_combis(idx: usize, slice: &[i64], visited: &mut HashMap<usize, i64>) -> i64 {
+    if idx == slice.len() - 1 {
+        return 1;
+    }
+    if visited.contains_key(&idx) {
+        return *visited.get(&idx).unwrap();
+    }
+
+    let sum = (idx + 1..slice.len())
+        .filter(|next| slice[*next] - slice[idx] <= 3)
+        .map(|next| find_combis(next, slice, visited))
+        .sum::<i64>();
+    visited.insert(idx, sum);
+    sum
 }
