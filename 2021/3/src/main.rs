@@ -61,7 +61,7 @@ enum Mode {
     LeastCommon,
 }
 
-fn find_most_common_line(matrix: &Vec<Vec<i64>>, idx: usize, mode: Mode) -> Vec<i64> {
+fn find_relevant_line(matrix: &Vec<Vec<i64>>, idx: usize, mode: Mode) -> Vec<i64> {
     let breakeven = matrix.len() / 2;
 
     let zeros = matrix
@@ -96,13 +96,13 @@ fn find_most_common_line(matrix: &Vec<Vec<i64>>, idx: usize, mode: Mode) -> Vec<
     if remaining_matrix.len() == 1 {
         remaining_matrix[0].clone()
     } else {
-        find_most_common_line(&remaining_matrix, idx + 1, mode)
+        find_relevant_line(&remaining_matrix, idx + 1, mode)
     }
 }
 
 fn part2(matrix: Vec<Vec<i64>>) {
-    let most_common = find_most_common_line(&matrix, 0, Mode::MostCommon);
-    let least_common = find_most_common_line(&matrix, 0, Mode::LeastCommon);
+    let most_common = find_relevant_line(&matrix, 0, Mode::MostCommon);
+    let least_common = find_relevant_line(&matrix, 0, Mode::LeastCommon);
 
     let oxygen = fold_to_decimal(&most_common);
     let co2 = fold_to_decimal(&least_common);
