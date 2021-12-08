@@ -55,7 +55,7 @@ fn part1(input: Vec<(Vec<Pattern>, FourDigitDisplay)>) {
     println!("Sum {}", sum);
 }
 
-fn to_num(p: &Pattern) -> u64 {
+fn pattern_to_code(p: &Pattern) -> u64 {
     p.0.split("")
         .filter(|l| !l.is_empty())
         .map(|l| match l {
@@ -75,46 +75,50 @@ fn part2(input: Vec<(Vec<Pattern>, FourDigitDisplay)>) {
     let sum: u64 = input
         .iter()
         .map(|(patterns, display)| {
-            let mut num_2_patterncode = vec![0; 10];
+            let mut digit_codes = vec![0; 10];
 
+            // resolve obvious 1,4,7,8
             patterns.iter().for_each(|p| match p.0.len() {
                 2 => {
-                    num_2_patterncode[1] = to_num(p);
+                    digit_codes[1] = pattern_to_code(p);
                 }
                 3 => {
-                    num_2_patterncode[7] = to_num(p);
+                    digit_codes[7] = pattern_to_code(p);
                 }
                 4 => {
-                    num_2_patterncode[4] = to_num(p);
+                    digit_codes[4] = pattern_to_code(p);
                 }
                 7 => {
-                    num_2_patterncode[8] = to_num(p);
+                    digit_codes[8] = pattern_to_code(p);
                 }
                 _ => (),
             });
 
+            // resolve 9 before 5
             patterns.iter().for_each(|p| match p.0.len() {
                 6 => {
-                    let code = to_num(p);
-                    if (code as f64) % (num_2_patterncode[4] as f64) == 0.0 {
-                        num_2_patterncode[9] = code;
-                    } else if (code as f64) % (num_2_patterncode[1] as f64) == 0.0 {
-                        num_2_patterncode[0] = code;
+                    let code = pattern_to_code(p);
+                    if no_remainder(code, digit_codes[4]) {
+                        digit_codes[9] = code;
+                    } else if no_remainder(code, digit_codes[1]) {
+                        digit_codes[0] = code;
                     } else {
-                        num_2_patterncode[6] = code;
+                        digit_codes[6] = code;
                     }
                 }
                 _ => (),
             });
+
+            // resolve 5 from 9
             patterns.iter().for_each(|p| match p.0.len() {
                 5 => {
-                    let code = to_num(p);
-                    if (code as f64) % (num_2_patterncode[7] as f64) == 0.0 {
-                        num_2_patterncode[3] = code;
-                    } else if (num_2_patterncode[9] as f64) % (code as f64) == 0.0 {
-                        num_2_patterncode[5] = code;
+                    let code = pattern_to_code(p);
+                    if no_remainder(code, digit_codes[7]) {
+                        digit_codes[3] = code;
+                    } else if no_remainder(digit_codes[9], code) {
+                        digit_codes[5] = code;
                     } else {
-                        num_2_patterncode[2] = code;
+                        digit_codes[2] = code;
                     }
                 }
                 _ => (),
@@ -124,7 +128,7 @@ fn part2(input: Vec<(Vec<Pattern>, FourDigitDisplay)>) {
                 .0
                 .iter()
                 .enumerate()
-                .map(|(idx, p)| resolve_num(&num_2_patterncode, p, idx as u32))
+                .map(|(idx, p)| calc_display(&digit_codes, p, idx as u32))
                 .sum::<u64>();
             // dbg!(&num_2_patterncode, &s);
             s
@@ -135,12 +139,16 @@ fn part2(input: Vec<(Vec<Pattern>, FourDigitDisplay)>) {
     println!("Sum {}", sum);
 }
 
-fn resolve_num(num_2_patterncode: &Vec<u64>, p: &Pattern, idx: u32) -> u64 {
+fn no_remainder(value: u64, divisor: u64) -> bool {
+    (value as f64) % (divisor as f64) == 0.0
+}
+
+fn calc_display(digit_codes: &Vec<u64>, pattern: &Pattern, idx: u32) -> u64 {
     let factor: u64 = 10_u32.pow(3_u32 - idx) as u64;
-    num_2_patterncode
+    digit_codes
         .iter()
         .enumerate()
-        .find(|(_, num)| to_num(p) == **num)
+        .find(|(_, num)| pattern_to_code(pattern) == **num)
         .map(|(idx, _)| idx)
         .unwrap() as u64
         * factor
