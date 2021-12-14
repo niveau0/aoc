@@ -47,10 +47,10 @@ fn part1(input: &Input) {
 
     let polymer = input.0;
     println!("## Part 1");
-    println!(
-        "Result {}",
-        polymer.iter().fold("".to_owned(), |a, b| a + b)
-    );
+    // println!(
+    //     "Result {}",
+    //     polymer.iter().fold("".to_owned(), |a, b| a + b)
+    // );
 
     let (most, least, min, max) = find_min_max(polymer);
 
@@ -65,30 +65,34 @@ fn part1(input: &Input) {
 }
 
 fn part2(input: &Input) {
-    let mut input = input.clone();
+    let input = input.clone();
+
+    let pairs: Vec<String> = input
+        .0
+        .as_slice()
+        .windows(2)
+        .map(|w| w[0].to_owned() + &w[1])
+        .collect();
+
+    let mut parts: HashMap<String, u128> = HashMap::new();
+    for p in pairs {
+        parts.entry(p).and_modify(|v| *v += 1).or_insert(1);
+    }
+    let mut counter: HashMap<String, u128> = HashMap::new();
+    for letter in input.0.clone() {
+        counter.entry(letter).and_modify(|v| *v += 1).or_insert(1);
+    }
 
     (0..40).for_each(|_| {
-        input.transform();
+        input.transform2(&mut parts, &mut counter);
+        // println!("Result {}", parts.iter().map(|(_, c)| c).sum::<u128>());
     });
 
-    println!("transformed");
-    let polymer = input.0;
-    println!("## Part 1");
-    println!(
-        "Result {}",
-        polymer.iter().fold("".to_owned(), |a, b| a + b)
-    );
-
-    let (most, least, min, max) = find_min_max(polymer);
-
-    println!(
-        "Most: {}({}), Least: {}({}), Diff {}",
-        most,
-        max,
-        least,
-        min,
-        max - min
-    );
+    dbg!(&counter);
+    let max = counter.iter().map(|(_, v)| v).max().unwrap();
+    let min = counter.iter().map(|(_, v)| v).min().unwrap();
+    println!("## Part 2");
+    println!("Max: {}, Min: {}, Diff {}", max, min, max - min);
 }
 
 fn find_min_max(mut polymer: Vec<String>) -> (String, String, usize, usize) {
@@ -132,5 +136,29 @@ impl Input {
         next.push(polymer[polymer.len() - 1].to_owned());
 
         self.0 = next;
+    }
+
+    fn transform2(&self, parts: &mut HashMap<String, u128>, counter: &mut HashMap<String, u128>) {
+        let copy: HashMap<String, u128> = parts.clone();
+        for (k, v) in copy {
+            if v == 0 {
+                continue;
+            }
+            let t = self.1.get(&k);
+
+            if let Some(t) = t {
+                let p1 = k[0..1].to_owned() + t;
+                let p2 = t.to_owned() + &k[1..];
+                counter
+                    .entry(t.to_owned())
+                    .and_modify(|tv| *tv += v)
+                    .or_insert(v);
+                parts.entry(p1).and_modify(|p1v| *p1v += v).or_insert(v);
+                parts.entry(p2).and_modify(|p2v| *p2v += v).or_insert(v);
+                parts.entry(k).and_modify(|act| {
+                    *act -= v;
+                });
+            }
+        }
     }
 }
