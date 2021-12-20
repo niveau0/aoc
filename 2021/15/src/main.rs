@@ -41,7 +41,7 @@ fn main() {
 #[derive(Debug)]
 struct Grid(Vec<Vec<Node>>);
 
-#[derive(Debug, PartialEq, PartialOrd, Eq)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Hash)]
 struct Node {
     x: usize,
     y: usize,
@@ -86,32 +86,11 @@ impl<'a> Ord for PathNode<'a> {
 fn part1(input: &Input) {
     let grid = Grid::new(&input);
     let (w, h) = grid.size();
-    let goal = grid.node(w - 1, h - 1);
-    let start = PathNode(&grid.node(0, 0), 0, None);
+    let goal = grid.node(w - 1, h - 1).unwrap();
+    let start = PathNode(&grid.node(0, 0).unwrap(), 0, None);
 
     let last = find_path(start, goal, &grid);
-
-    let mut path = vec![];
-    let mut risk = 0;
-    if let Some(PathNode(n, _, parent)) = last {
-        risk += n.g;
-        path.push(n);
-
-        let mut parent = &parent;
-        loop {
-            if let Some(pathnode) = &parent {
-                let PathNode(n, _, p) = &**pathnode;
-                path.push(n);
-                parent = p;
-                if n.x != 0 || n.y != 0 {
-                    risk += n.g;
-                }
-            } else {
-                break;
-            }
-        }
-        print(&grid, &path);
-    }
+    let (path, risk) = aggregate(last, &grid);
 
     println!("## Part 1");
     if path.len() == 0 {
@@ -125,11 +104,21 @@ fn part2(input: &Input) {
     let input = add_tiles(&input);
     let grid = Grid::new(&input);
     let (w, h) = grid.size();
-    let goal = grid.node(w - 1, h - 1);
-    let start = PathNode(&grid.node(0, 0), 0, None);
+    let goal = grid.node(w - 1, h - 1).unwrap();
+    let start = PathNode(&grid.node(0, 0).unwrap(), 0, None);
 
     let last = find_path(start, goal, &grid);
+    let (path, risk) = aggregate(last, &grid);
 
+    println!("## Part 2");
+    if path.len() == 0 {
+        println!("No path found");
+    } else {
+        println!("Risk: {}", risk);
+    }
+}
+
+fn aggregate<'a>(last: Option<PathNode<'a>>, grid: &'a Grid) -> (Vec<&'a Node>, u16) {
     let mut path = vec![];
     let mut risk = 0;
     if let Some(PathNode(n, _, parent)) = last {
@@ -149,15 +138,9 @@ fn part2(input: &Input) {
                 break;
             }
         }
-        print(&grid, &path);
+        grid.print(&path);
     }
-
-    println!("## Part 2");
-    if path.len() == 0 {
-        println!("No path found");
-    } else {
-        println!("Risk: {}", risk);
-    }
+    (path, risk)
 }
 
 fn add_tiles(input: &Input) -> Input {
@@ -217,24 +200,6 @@ fn find_path<'a>(start: PathNode<'a>, goal: &Node, grid: &'a Grid) -> Option<Pat
     last
 }
 
-fn print(grid: &Grid, path: &Vec<&Node>) {
-    let (w, h) = grid.size();
-    (0..h).for_each(|y| {
-        (0..w).for_each(|x| {
-            let node = grid.node(x, y);
-
-            let mark = path.iter().find(|n| **n == node).is_some();
-            if mark {
-                print!("\x1b[1m{}", node.g);
-            } else {
-                print!("\x1b[0m{}", node.g);
-            }
-        });
-        println!();
-    });
-    println!();
-}
-
 impl Grid {
     fn new(input: &Input) -> Self {
         let (w, h) = input.size();
@@ -253,6 +218,26 @@ impl Grid {
             .collect();
 
         Grid(nodes)
+    }
+
+    fn print(&self, path: &Vec<&Node>) {
+        let (w, h) = self.size();
+
+        let pathmap: HashMap<&Node, bool> = path.iter().map(|n| (*n, true)).collect();
+        (0..h).for_each(|y| {
+            (0..w).for_each(|x| {
+                let node = self.node(x, y).unwrap();
+
+                let mark = pathmap.get(node).is_some();
+                if mark {
+                    print!("\x1b[1m{}", node.g);
+                } else {
+                    print!("\x1b[0m{}", node.g);
+                }
+            });
+            println!();
+        });
+        println!();
     }
 
     fn size(&self) -> (usize, usize) {
@@ -276,9 +261,13 @@ impl Grid {
             .collect()
     }
 
-    // TODO return option
-    fn node(&self, x: usize, y: usize) -> &Node {
-        &self.0[y][x]
+    fn node(&self, x: usize, y: usize) -> Option<&Node> {
+        let (w, h) = self.size();
+        if x >= w || y >= h {
+            None
+        } else {
+            Some(&self.0[y][x])
+        }
     }
 }
 
