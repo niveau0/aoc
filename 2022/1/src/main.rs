@@ -9,7 +9,7 @@ fn main() {
     }
     let data = fs::read_to_string(file).expect("Something went wrong reading the file");
     let mut lines: Vec<i64> = data
-        .split("\n")
+        .split('\n')
         .map(|l| if l.is_empty() { 0 } else { l.parse().unwrap() })
         .collect();
 

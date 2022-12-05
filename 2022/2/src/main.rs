@@ -9,9 +9,9 @@ fn main() {
     }
     let data = fs::read_to_string(file).expect("Something went wrong reading the file");
     let pairs: Vec<(&str, &str)> = data
-        .split("\n")
+        .split('\n')
         .filter(|l| !l.is_empty())
-        .map(|l| l.split(" "))
+        .map(|l| l.split(' '))
         .map(|mut split| (split.next().unwrap(), split.next().unwrap()))
         .collect();
 
@@ -19,7 +19,7 @@ fn main() {
     part2(&pairs);
 }
 
-fn part1(pairs: &Vec<(&str, &str)>) {
+fn part1(pairs: &[(&str, &str)]) {
     let total = pairs.iter().fold(0, |total, p| {
         let score = match p {
             ("A", "X") => 1 + 3,
@@ -40,7 +40,7 @@ fn part1(pairs: &Vec<(&str, &str)>) {
     println!("{}", total);
 }
 
-fn part2(pairs: &Vec<(&str, &str)>) {
+fn part2(pairs: &[(&str, &str)]) {
     let total = pairs.iter().fold(0, |total, p| {
         let score = match p {
             ("A", "X") => 3,
