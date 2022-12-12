@@ -1,20 +1,5 @@
 use std::{env, fs, path::Path};
 
-trait Prio {
-    fn prio(&self) -> u32;
-}
-
-impl Prio for char {
-    fn prio(&self) -> u32 {
-        let v = *self as u32;
-        if v >= 96 {
-            v - 96
-        } else {
-            v - 38
-        }
-    }
-}
-
 type Pair = ((u16, u16), (u16, u16));
 
 fn main() {
