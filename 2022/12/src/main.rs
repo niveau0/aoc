@@ -94,11 +94,29 @@ fn step(
         p if p == end => {
             if tracked_length == 0 || tracked_length > length {
                 visited.insert(p, length + 1);
+                //print(length, data, p);
             }
         }
         p => {
             visited.insert(p, length + 1);
+            //print(length, data, p);
             climb(data, p, end, visited, length + 1)
         }
     }
 }
+
+// fn print(length: usize, data: &[Vec<char>], pos: (usize, usize)) {
+//     let color: &dyn termion::color::Color = match length + 1 {
+//         l if l > 35 => &termion::color::Red,
+//         l if l > 10 => &termion::color::Cyan,
+//         l if l > 5 => &termion::color::Blue,
+//         l if l > 1 => &termion::color::Cyan,
+//         _ => &termion::color::White,
+//     };
+//     print!(
+//         "{}{}{}",
+//         termion::cursor::Goto(pos.0 as u16 + 1, pos.1 as u16 + 1),
+//         termion::color::Fg(color),
+//         &data[pos.1][pos.0]
+//     );
+// }
