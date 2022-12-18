@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::{collections::HashMap, env, fs, path::Path, time};
+use std::{collections::HashMap, env, fs, io::Write, path::Path, time};
 
 struct Cave {
     data: HashMap<(u16, u16), char>,
@@ -67,6 +67,8 @@ impl Cave {
         if self.data.get(&(x, y)).is_none() {
             self.data.insert((x, y), 'O');
             self.print_letter(x, y, 'O');
+            std::io::stdout().flush().unwrap();
+            std::thread::sleep(std::time::Duration::from_millis(50));
             true
         } else {
             false
