@@ -17,7 +17,7 @@ fn main() {
     part2(&data);
 }
 
-fn part1(data: &Vec<&str>) {
+fn part1(data: &[&str]) {
     let sum = data
         .iter()
         .map(|l| {
@@ -38,7 +38,7 @@ fn part1(data: &Vec<&str>) {
     println!("Part1: {}", sum);
 }
 
-fn part2(data: &Vec<&str>) {
+fn part2(data: &[&str]) {
     let sum = data
         .iter()
         .map(|l| {
