@@ -7,8 +7,10 @@ struct MapRange {
     len: usize,
 }
 impl MapRange {
-    fn split_by_range(&self, range: &Range<u64>) -> (Vec<Range<u64>>, bool) {
-        let mut new_ranges = Vec::new();
+    // returns not-mapped ranges and mapped range
+    fn split_by_range_and_map(&self, range: &Range<u64>) -> (Vec<Range<u64>>, Option<Range<u64>>) {
+        let mut kept_ranges = Vec::new();
+        let mapped_range;
 
         let map_range = (
             range.start.max(self.src),
@@ -16,24 +18,19 @@ impl MapRange {
         );
 
         if map_range.0 < map_range.1 {
+            mapped_range =
+                Some(map_range.0 - self.src + self.dest..map_range.1 - self.src + self.dest);
             if map_range.0 > range.start {
-                new_ranges.push(range.start..map_range.0);
+                kept_ranges.push(range.start..map_range.0);
             }
-            new_ranges.push(map_range.0 - self.src + self.dest..map_range.1 - self.src + self.dest);
             if range.end > map_range.1 {
-                new_ranges.push(map_range.1..range.end);
+                kept_ranges.push(map_range.1..range.end);
             }
-            println!("{:?} -> {:?} via {:?}", &range, &new_ranges, self);
-            // if new_ranges.len() == 3 {
-            //     panic!()
-            // }
-            (new_ranges, false)
         } else {
             // outside of range, keep numbers
-            new_ranges.push(range.clone());
-            println!("{:?} -> {:?} via {:?}", &range, &new_ranges, self);
-            (new_ranges, true)
+            mapped_range = None;
         }
+        (kept_ranges, mapped_range)
     }
 }
 
@@ -63,13 +60,27 @@ impl Mapper {
             })
             .unwrap_or(n)
     }
-    fn map_range(&self, range: &Range<u64>) -> Vec<Range<u64>> {
-        self.ranges
-            .iter()
-            .map(|r| r.split_by_range(range))
-            .find(|(x, b)| *b)
-            .map(|(x, _)| x)
-            .unwrap()
+    fn map_range(&self, seed_range: &Range<u64>) -> Vec<Range<u64>> {
+        let mut seed_ranges = vec![seed_range.clone()];
+        let mut new_ranges = vec![];
+        while !seed_ranges.is_empty() {
+            if let Some(range) = &seed_ranges.pop() {
+                let mut was_mapped = false;
+                for map_range in &self.ranges {
+                    let (kept, mapped) = map_range.split_by_range_and_map(&range);
+                    if let Some(mapped) = mapped {
+                        new_ranges.push(mapped);
+                        kept.into_iter().for_each(|r| seed_ranges.push(r));
+                        was_mapped = true;
+                        break;
+                    }
+                }
+                if !was_mapped {
+                    new_ranges.push(range.clone());
+                }
+            }
+        }
+        new_ranges
     }
 }
 
@@ -133,33 +144,26 @@ fn part1(seeds: &[u64], mapper: &[Mapper]) {
 
 fn part2(seed_ranges: &[Range<u64>], mapper: &[Mapper]) {
     // brute force (took hours):
-    dbg!(seed_ranges.len());
-    let min = seed_ranges
-        .iter()
-        .enumerate()
-        .map(|(i, r)| {
-            dbg!(i);
-            r.clone()
-                .map(|s| mapper.iter().fold(s, |acc, m| m.map_value(acc)))
-                .min()
-                .unwrap()
-        })
-        .min()
-        .unwrap();
-
-    println!("Part2: {}", min);
+    // dbg!(seed_ranges.len());
+    // let min = seed_ranges
+    //     .iter()
+    //     .enumerate()
+    //     .map(|(i, r)| {
+    //         dbg!(i);
+    //         r.clone()
+    //             .map(|s| mapper.iter().fold(s, |acc, m| m.map_value(acc)))
+    //             .min()
+    //             .unwrap()
+    //     })
+    //     .min()
+    //     .unwrap();
 
     // Too bad: there is a bug I fail find for the better solution:
 
-    // let mut seed_ranges: HashSet<Range<u64>> = seed_ranges.iter().cloned().collect();
-    // println!("{:?}", &seed_ranges);
-    // mapper.iter().for_each(|m| {
-    //     seed_ranges = seed_ranges.iter().flat_map(|r| m.map_range(r)).collect();
-    //     println!("{:?}", &seed_ranges);
-    // });
+    let mut sr = seed_ranges.to_vec();
+    for m in mapper {
+        sr = sr.iter().flat_map(|r| m.map_range(r)).collect();
+    }
 
-    // println!(
-    //     "Part2: {}",
-    //     seed_ranges.iter().map(|r| r.start).min().unwrap()
-    // );
+    println!("Part2: {}", sr.iter().map(|r| r.start).min().unwrap());
 }
